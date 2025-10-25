@@ -5,7 +5,10 @@
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 SRC_DIR = $(PWD)/../src
-PROJECT_SOURCES = project.v
+PROJECT_SOURCES = tt_um_manchester.v manchester.v
+
+# Note: PROJECT_SOURCES lists your design files in ../src/
+# tb.v is your testbench wrapper and stays in the test/ directory
 
 ifneq ($(GATES),yes)
 
