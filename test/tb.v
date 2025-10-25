@@ -4,7 +4,7 @@
 /* This testbench just instantiates the module and makes some convenient wires
    that can be driven / tested by the cocotb test.py.
 */
-module tb ();
+module tb;
 
   // Dump the signals to a VCD file. You can view it with gtkwave.
   initial begin
@@ -23,23 +23,12 @@ module tb ();
   wire [7:0] uio_out;
   wire [7:0] uio_oe;
 
-`ifdef GL_TEST
-  // Gate level needs power connections as wires
-  wire VPWR = 1'b1;
-  wire VGND = 1'b0;
-`endif
-
   // Instantiate the DUT (Device Under Test)
-  // Make sure this matches your top_module name in info.yaml
-`ifdef GL_TEST
-  tt_um_cybernerd_manchester dut (
-`else
-  tt_um_manchester dut (
-`endif
+  tt_um_cybernerd_manchester tt_um_manchester (
       // Include power ports for GL test:
 `ifdef GL_TEST
-      .VPWR(VPWR),
-      .VGND(VGND),
+      .VPWR(1'b1),
+      .VGND(1'b0),
 `endif
       .ui_in  (ui_in),    // Dedicated inputs
       .uo_out (uo_out),   // Dedicated outputs
