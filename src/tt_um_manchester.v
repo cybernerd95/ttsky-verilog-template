@@ -21,6 +21,9 @@ module tt_um_cybernerd_manchester (
   wire encode_mode;
   wire [7:0] data_in;
   
+  // Suppress lint warnings for unused signals
+  wire _unused = &{ena, ui_in[7:1], 1'b0};
+  
   // Map inputs
   assign encode_mode = ui_in[0];  // Use input bit 0 for encode_mode
   assign data_in = uio_in[7:0];   // Use bidirectional pins as inputs for data
@@ -33,9 +36,10 @@ module tt_um_cybernerd_manchester (
   assign uo_out[0] = data_out;    // Manchester encoded output on bit 0
   assign uo_out[7:1] = 7'b0;      // Unused outputs set to 0
   
-  // Instantiate the Manchester encoder (no reset passed)
+  // Instantiate the Manchester encoder - NOW WITH rst_n!
   manchester encoder (
       .clk(clk),
+      .rst_n(rst_n),              // ← THIS WAS MISSING!
       .encode_mode(encode_mode),
       .data_in(data_in),
       .data_out(data_out)
