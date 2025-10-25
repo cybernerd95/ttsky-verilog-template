@@ -1,6 +1,10 @@
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
+import os
+
+# Set up XML test results
+os.environ['COCOTB_RESULTS_FILE'] = 'results.xml'
 
 @cocotb.test()
 async def test_project(dut):
