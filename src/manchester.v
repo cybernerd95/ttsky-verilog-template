@@ -1,3 +1,7 @@
+`default_nettype none
+
+
+
 module manchester(
     input wire clk,
     input wire encode_mode,
