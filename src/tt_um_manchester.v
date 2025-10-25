@@ -36,6 +36,7 @@ module tt_um_cybernerd_manchester (
   // Instantiate the Manchester encoder
   manchester encoder (
       .clk(clk),
+      .rst_n(rst_n),
       .encode_mode(encode_mode),
       .data_in(data_in),
       .data_out(data_out)
