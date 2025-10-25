@@ -33,10 +33,9 @@ module tt_um_cybernerd_manchester (
   assign uo_out[0] = data_out;    // Manchester encoded output on bit 0
   assign uo_out[7:1] = 7'b0;      // Unused outputs set to 0
   
-  // Instantiate the Manchester encoder
+  // Instantiate the Manchester encoder (no reset passed)
   manchester encoder (
       .clk(clk),
-      .rst_n(rst_n),
       .encode_mode(encode_mode),
       .data_in(data_in),
       .data_out(data_out)

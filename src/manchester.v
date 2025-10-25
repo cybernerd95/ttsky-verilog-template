@@ -1,45 +1,41 @@
 `default_nettype none
 
-
-
 module manchester(
     input wire clk,
+    input wire rst_n,
     input wire encode_mode,
     input wire [7:0] data_in,
     output reg data_out
 );
 
-reg [2:0] bit_index;
-reg phase; // 0 = first half of bit period, 1 = second half
+    reg [2:0] bit_index;
+    reg phase;
 
-initial begin
-    bit_index = 0;
-    phase = 0;
-    data_out = 0;
-end
-
-always @(posedge clk) begin
-    if (phase == 0) begin
-        // First half of Manchester bit period
-        if (encode_mode == 0) begin
-            // Manchester encoding (IEEE 802.3): 0 = high-to-low, 1 = low-to-high
-            data_out <= data_in[bit_index];
+    always @(posedge clk) begin
+        if (!rst_n) begin
+            bit_index <= 3'd0;
+            phase <= 1'b0;
+            data_out <= 1'b0;
         end else begin
-            // Inverse Manchester: 0 = low-to-high, 1 = high-to-low
-            data_out <= ~data_in[bit_index];
+            if (phase == 1'b0) begin
+                // First half of bit period
+                if (encode_mode == 1'b0) begin
+                    data_out <= data_in[bit_index];
+                end else begin
+                    data_out <= ~data_in[bit_index];
+                end
+                phase <= 1'b1;
+            end else begin
+                // Second half - transition
+                data_out <= ~data_out;
+                phase <= 1'b0;
+                
+                if (bit_index == 3'd7)
+                    bit_index <= 3'd0;
+                else
+                    bit_index <= bit_index + 3'd1;
+            end
         end
-        phase <= 1;
-    end else begin
-        // Second half of Manchester bit period (transition)
-        data_out <= ~data_out;
-        phase <= 0;
-        
-        // Move to next bit after completing full bit period
-        if (bit_index == 7)
-            bit_index <= 0;
-        else
-            bit_index <= bit_index + 1;
     end
-end
 
 endmodule
