@@ -1,3 +1,5 @@
+`timescale 1ns / 1ps
+
 module tt_um_xyz_manchester(
     input  [7:0] ui_in,
     output [7:0] uo_out,
