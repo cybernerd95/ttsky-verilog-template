@@ -1,20 +1,10 @@
-<!---
+# My TinyTapeout Project
 
-This file is used to generate your project datasheet. Please fill in the information below and delete any unused
-sections.
+This is a simple example that adds the 8-bit input `ui_in` and `uio_in` and outputs the result on `uo_out`.
 
-You can also include images in this folder and reference them in the markdown. Each image must be less than
-512 kb in size, and the combined size of all images must be less than 1 MB.
--->
+## Pin Usage
+- `ui_in[7:0]`: 8-bit input A
+- `uio_in[7:0]`: 8-bit input B
+- `uo_out[7:0]`: 8-bit output sum = A + B
+- `clk`, `rst_n`, and `ena` are unused in this design.
 
-## How it works
-
-Explain how your project works
-
-## How to test
-
-Explain how to use your project
-
-## External hardware
-
-List external hardware used in your project (e.g. PMOD, LED display, etc), if any
