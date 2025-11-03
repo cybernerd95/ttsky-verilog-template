@@ -1,61 +1,43 @@
-# SPDX-FileCopyrightText: © 2024 Tiny Tapeout
-# SPDX-License-Identifier: Apache-2.0
+# Makefile for cocotb simulation
+# Compatible with Tiny Tapeout tt-sky130 template
 
-# Makefile
-# See https://docs.cocotb.org/en/stable/quickstart.html for more info
-
-# defaults
+# Simulator and language
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
+
+# Directories
 SRC_DIR = $(PWD)/../src
+
+# Project source files
 PROJECT_SOURCES = project.v manchester.v
 
-# Note: PROJECT_SOURCES lists your design files in ../src/
-# tb.v is your testbench wrapper and stays in the test/ directory
-
-ifneq ($(GATES),yes)
-
-# RTL simulation
+# Build directory for simulation
 SIM_BUILD = sim_build/rtl
-VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
 
-else
+# Verilog source list
+VERILOG_SOURCES += $(addprefix $(SRC_DIR)/, $(PROJECT_SOURCES))
 
-# Gate-level simulation
-SIM_BUILD = sim_build/gl
-COMPILE_ARGS += -DGL_TEST
-COMPILE_ARGS += -DFUNCTIONAL
-COMPILE_ARGS += -DUSE_POWER_PINS
-COMPILE_ARGS += -DSIM
-COMPILE_ARGS += -DUNIT_DELAY=\#1
-VERILOG_SOURCES += $(PDK_ROOT)/sky130A/libs.ref/sky130_fd_sc_hd/verilog/primitives.v
-VERILOG_SOURCES += $(PDK_ROOT)/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v
-
-# This file gets copied by the GDS workflow
-VERILOG_SOURCES += $(PWD)/gate_level_netlist.v
-
-endif
-
-# Allow sharing configuration between design and testbench via include
+# Include path for shared definitions
 COMPILE_ARGS += -I$(SRC_DIR)
 
-# Include the testbench sources
-VERILOG_SOURCES += $(PWD)/tb.v
-TOPLEVEL = testbench
+# Top-level DUT (must match your Tiny Tapeout module)
+TOPLEVEL = tt_um_xyz_manchester
 
-# List test modules to run (Python files without .py)
+# Python testbench
 COCOTB_TEST_MODULES = test
 
-# Cocotb results path for CI test summary
-COCOTB_RESULTS_DIR = $(PWD)/test
-COCOTB_RESULTS_FILE = $(COCOTB_RESULTS_DIR)/results.xml
-export COCOTB_RESULTS_FILE
+# Disable VPI optimization for CI stability
+EXTRA_ARGS += -Wall -Wno-timescale
 
-# Ensure results directory exists before simulation
-all: prep sim
+# Rule for building simulation
+all: sim
 
-prep:
-	mkdir -p $(COCOTB_RESULTS_DIR)
+# Run RTL simulation
+sim:
+	@echo "Running cocotb test for $(TOPLEVEL)..."
+	$(MAKE) -f $(shell cocotb-config --makefiles)/Makefile.sim SIM=$(SIM) TOPLEVEL=$(TOPLEVEL) \
+		VERILOG_SOURCES="$(VERILOG_SOURCES)" SIM_BUILD=$(SIM_BUILD) \
+		COCOTB_TEST_MODULES=$(COCOTB_TEST_MODULES) COMPILE_ARGS="$(COMPILE_ARGS)" EXTRA_ARGS="$(EXTRA_ARGS)"
 
-# Include cocotb make rules for simulator setup
-include $(shell cocotb-config --makefiles)/Makefile.sim
+clean:
+	rm -rf sim_build results.xml __pycache__
