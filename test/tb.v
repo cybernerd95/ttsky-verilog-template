@@ -20,7 +20,7 @@ tt_um_xyz_manchester uut(
 );
 
 initial begin
-clk=0;
+clk=1;
 forever #5 clk=~clk;
 end
 

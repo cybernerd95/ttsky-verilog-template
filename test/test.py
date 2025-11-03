@@ -13,7 +13,7 @@ async def test_project(dut):
     dut._log.info("🔧 Starting test for tt_um_xyz_manchester")
 
     # Start clock
-    clock = Clock(dut.clk, 10, unit="us")
+    clock = Clock(dut.clk, 10, unit="ns")
     cocotb.start_soon(clock.start())
 
     # Reset and enable
