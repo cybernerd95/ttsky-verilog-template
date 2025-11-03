@@ -1,43 +1,84 @@
-# Makefile for cocotb simulation
-# Compatible with Tiny Tapeout tt-sky130 template
+# Makefile for Tiny Tapeout Cocotb Simulation
+# SPDX-License-Identifier: Apache-2.0
 
-# Simulator and language
+# ============================================================================
+# User configuration
+# ============================================================================
+
+# Simulator (Icarus is default for Tiny Tapeout CI)
 SIM ?= icarus
 TOPLEVEL_LANG ?= verilog
 
 # Directories
-SRC_DIR = $(PWD)/../src
+SRC_DIR        := $(PWD)/../src
+SIM_BUILD      := sim_build/rtl
 
-# Project source files
-PROJECT_SOURCES = project.v manchester.v
+# Your project source files (relative to src/)
+PROJECT_SOURCES := project.v manchester.v
 
-# Build directory for simulation
-SIM_BUILD = sim_build/rtl
+# Include path
+COMPILE_ARGS   += -I$(SRC_DIR)
 
-# Verilog source list
-VERILOG_SOURCES += $(addprefix $(SRC_DIR)/, $(PROJECT_SOURCES))
-
-# Include path for shared definitions
-COMPILE_ARGS += -I$(SRC_DIR)
-
-# Top-level DUT (must match your Tiny Tapeout module)
-TOPLEVEL = tt_um_xyz_manchester
+# Top-level module (the DUT)
+TOPLEVEL       := tt_um_xyz_manchester
 
 # Python testbench
-COCOTB_TEST_MODULES = test
+COCOTB_TEST_MODULES := test
 
-# Disable VPI optimization for CI stability
-EXTRA_ARGS += -Wall -Wno-timescale
+# ============================================================================
+# Conditional gate-level support (optional)
+# ============================================================================
 
-# Rule for building simulation
+ifneq ($(GATES),yes)
+
+# RTL simulation sources
+VERILOG_SOURCES += $(addprefix $(SRC_DIR)/,$(PROJECT_SOURCES))
+
+else
+
+# Gate-level simulation mode
+SIM_BUILD       := sim_build/gl
+COMPILE_ARGS    += -DGL_TEST -DFUNCTIONAL -DUSE_POWER_PINS -DSIM -DUNIT_DELAY=\#1
+
+VERILOG_SOURCES += $(PDK_ROOT)/sky130A/libs.ref/sky130_fd_sc_hd/verilog/primitives.v
+VERILOG_SOURCES += $(PDK_ROOT)/sky130A/libs.ref/sky130_fd_sc_hd/verilog/sky130_fd_sc_hd.v
+VERILOG_SOURCES += $(PWD)/gate_level_netlist.v
+
+endif
+
+# ============================================================================
+# Rules
+# ============================================================================
+
+# Default target
 all: sim
 
-# Run RTL simulation
+# RTL Simulation rule
 sim:
-	@echo "Running cocotb test for $(TOPLEVEL)..."
-	$(MAKE) -f $(shell cocotb-config --makefiles)/Makefile.sim SIM=$(SIM) TOPLEVEL=$(TOPLEVEL) \
-		VERILOG_SOURCES="$(VERILOG_SOURCES)" SIM_BUILD=$(SIM_BUILD) \
-		COCOTB_TEST_MODULES=$(COCOTB_TEST_MODULES) COMPILE_ARGS="$(COMPILE_ARGS)" EXTRA_ARGS="$(EXTRA_ARGS)"
+	@echo ""
+	@echo "🚀 Running Cocotb test for module: $(TOPLEVEL)"
+	@echo "📂 Sources: $(PROJECT_SOURCES)"
+	@echo ""
+	$(MAKE) -f $(shell cocotb-config --makefiles)/Makefile.sim \
+		SIM=$(SIM) TOPLEVEL_LANG=$(TOPLEVEL_LANG) \
+		TOPLEVEL=$(TOPLEVEL) SIM_BUILD=$(SIM_BUILD) \
+		VERILOG_SOURCES="$(VERILOG_SOURCES)" \
+		COCOTB_TEST_MODULES="$(COCOTB_TEST_MODULES)" \
+		COMPILE_ARGS="$(COMPILE_ARGS)"
 
+# Clean generated files
 clean:
 	rm -rf sim_build results.xml __pycache__
+
+# ============================================================================
+# Debug helpers
+# ============================================================================
+
+print-vars:
+	@echo "TOPLEVEL          = $(TOPLEVEL)"
+	@echo "SIM_BUILD         = $(SIM_BUILD)"
+	@echo "SRC_DIR           = $(SRC_DIR)"
+	@echo "PROJECT_SOURCES   = $(PROJECT_SOURCES)"
+	@echo "VERILOG_SOURCES   = $(VERILOG_SOURCES)"
+	@echo "COCOTB_TEST_MODULES = $(COCOTB_TEST_MODULES)"
+	@echo "COMPILE_ARGS      = $(COMPILE_ARGS)"
