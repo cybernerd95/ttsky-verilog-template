@@ -4,7 +4,6 @@ from cocotb.triggers import RisingEdge, Timer
 
 
 def encode_ieee(data: int) -> int:
-    """IEEE Manchester: 1 -> 10, 0 -> 01"""
     encoded = 0
     for i in range(8):
         bit = (data >> (7 - i)) & 1
@@ -13,7 +12,6 @@ def encode_ieee(data: int) -> int:
 
 
 def encode_thomas(data: int) -> int:
-    """Thomas Manchester: 1 -> 01, 0 -> 10"""
     encoded = 0
     for i in range(8):
         bit = (data >> (7 - i)) & 1
@@ -27,30 +25,40 @@ async def test_project(dut):
 
     dut._log.info("🔧 Starting test for tt_um_xyz_manchester")
 
-    clock = Clock(dut.clk, 10, units="ns")
+    # Start clock (10ns period)
+    clock = Clock(dut.clk, 10, unit="ns")
     cocotb.start_soon(clock.start())
 
-    # Reset DUT
-    dut.rst_n.value = 0
-    await Timer(20, units="ns")
-    dut.rst_n.value = 1
-    await RisingEdge(dut.clk)
+    # Reset DUT if available
+    if hasattr(dut, "rst_n"):
+        dut.rst_n.value = 0
+        await Timer(100, unit="ns")
+        dut.rst_n.value = 1
+        await RisingEdge(dut.clk)
+
+    # Let DUT settle (important for gate-level)
+    await Timer(200, unit="ns")
 
     for mode in [0, 1]:  # 0 = IEEE, 1 = Thomas
         data_in = 0b10110010
         dut.ui_in.value = data_in
         dut.uio_in.value = mode
 
-        await RisingEdge(dut.clk)
-        await Timer(20, units="ns")
+        dut._log.info(f"Testing mode={mode}, data_in={data_in:08b}")
 
-        uo_val = int(dut.uo_out.value.binstr.replace('x', '0').replace('z', '0'), 2)
-        uio_val = int(dut.uio_out.value.binstr.replace('x', '0').replace('z', '0'), 2)
+        # Wait for output to propagate (GL sims are slower)
+        await RisingEdge(dut.clk)
+        await Timer(200, unit="ns")
+
+        # Safely convert outputs (replace X/Z)
+        uo_val_str = str(dut.uo_out.value)
+        uio_val_str = str(dut.uio_out.value)
+        uo_val = int(uo_val_str.replace("x", "0").replace("z", "0"), 2)
+        uio_val = int(uio_val_str.replace("x", "0").replace("z", "0"), 2)
         encoded_out = (uo_val << 8) | uio_val
 
-
         expected = encode_ieee(data_in) if mode == 0 else encode_thomas(data_in)
-        dut._log.info(f"Testing mode={mode}, data_in={data_in:08b}")
+
         dut._log.info(f"DUT={encoded_out:016b}, EXPECTED={expected:016b}")
 
         assert encoded_out == expected, (
