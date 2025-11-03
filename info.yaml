@@ -11,7 +11,7 @@ project:
 
   source_files:
     - "manchester.v"
-    - "tt_um_xyz_manchester.v"
+    - "project.v"
 
 pinout:
   # Inputs
