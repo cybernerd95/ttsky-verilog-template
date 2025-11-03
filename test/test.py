@@ -37,7 +37,8 @@ async def test_project(dut):
         await RisingEdge(dut.clk)
 
     # Let DUT settle (important for gate-level)
-    await Timer(200, unit="ns")
+    await RisingEdge(dut.clk)
+    await Timer(1000, unit="ns")
 
     for mode in [0, 1]:  # 0 = IEEE, 1 = Thomas
         data_in = 0b10110010
