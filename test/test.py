@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: © 2024 Tiny Tapeout
+## SPDX-FileCopyrightText: © 2024 Tiny Tapeout
 # SPDX-License-Identifier: Apache-2.0
 
 import cocotb
@@ -8,33 +8,71 @@ from cocotb.triggers import ClockCycles
 
 @cocotb.test()
 async def test_project(dut):
-    dut._log.info("Start")
+    dut._log.info("Start Manchester encoder test")
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, unit="us")
+    # Set clock to 10 µs period (100 kHz)
+    clock = Clock(dut.clk, 10, units="us")
     cocotb.start_soon(clock.start())
 
     # Reset
-    dut._log.info("Reset")
+    dut._log.info("Resetting DUT")
     dut.ena.value = 1
     dut.ui_in.value = 0
     dut.uio_in.value = 0
     dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
+    await ClockCycles(dut.clk, 5)
     dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)
 
-    dut._log.info("Test project behavior")
+    dut._log.info("Beginning Manchester encoding tests")
 
-    # Set the input values you want to test
-    dut.ui_in.value = 20
-    dut.uio_in.value = 30
+    # Define (mode, data_in) test vectors
+    test_vectors = [
+        (0, 0b10110010),
+        (1, 0b10110010),
+        (0, 0b11110000),
+        (1, 0b11110000),
+        (0, 0b00001111),
+        (1, 0b00001111),
+    ]
 
-    # Wait for one clock cycle to see the output values
-    await ClockCycles(dut.clk, 1)
+    for mode, data_in in test_vectors:
+        dut.uio_in.value = mode  # mode = LSB
+        dut.ui_in.value = data_in
+        await ClockCycles(dut.clk, 2)
 
-    # The following assersion is just an example of how to check the output values.
-    # Change it to match the actual expected output of your module:
-    assert dut.uo_out.value == 50
+        ieee_encoded = encode_ieee(data_in)
+        thomas_encoded = encode_thomas(data_in)
+        expected = ieee_encoded if mode == 0 else thomas_encoded
 
-    # Keep testing the module by changing the input values, waiting for
-    # one or more clock cycles, and asserting the expected output values.
+        encoded_out = (dut.uo_out.value.integer << 8) | dut.uio_out.value.integer
+
+        dut._log.info(
+            f"Mode={mode}, Data={data_in:08b}, Encoded={encoded_out:016b}, Expected={expected:016b}"
+        )
+
+        assert encoded_out == expected, (
+            f"FAIL: Mode={mode}, Data={data_in:08b}, "
+            f"Expected={expected:016b}, Got={encoded_out:016b}"
+        )
+
+    dut._log.info("✅ All test cases passed!")
+
+
+def encode_ieee(data):
+    """IEEE Manchester encoding."""
+    out = 0
+    for i in range(8):
+        bit = (data >> (7 - i)) & 1
+        pair = 0b10 if bit else 0b01
+        out = (out << 2) | pair
+    return out
+
+
+def encode_thomas(data):
+    """Thomas Manchester encoding."""
+    out = 0
+    for i in range(8):
+        bit = (data >> (7 - i)) & 1
+        pair = 0b01 if bit else 0b10
+    return out
