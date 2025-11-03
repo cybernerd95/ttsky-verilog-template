@@ -41,7 +41,7 @@ COMPILE_ARGS += -I$(SRC_DIR)
 
 # Include the testbench sources
 VERILOG_SOURCES += $(PWD)/tb.v
-TOPLEVEL = tb
+TOPLEVEL = testbench
 
 # List test modules to run (Python files without .py)
 COCOTB_TEST_MODULES = test
