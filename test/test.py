@@ -44,7 +44,10 @@ async def test_project(dut):
         await RisingEdge(dut.clk)
         await Timer(20, units="ns")
 
-        encoded_out = (dut.uo_out.value.integer << 8) | dut.uio_out.value.integer
+        uo_val = int(dut.uo_out.value.binstr.replace('x', '0').replace('z', '0'), 2)
+        uio_val = int(dut.uio_out.value.binstr.replace('x', '0').replace('z', '0'), 2)
+        encoded_out = (uo_val << 8) | uio_val
+
 
         expected = encode_ieee(data_in) if mode == 0 else encode_thomas(data_in)
         dut._log.info(f"Testing mode={mode}, data_in={data_in:08b}")
