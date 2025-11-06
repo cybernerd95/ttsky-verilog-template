@@ -7,6 +7,7 @@
 
 # Simulator (Icarus is default for Tiny Tapeout CI)
 SIM ?= icarus
+COMPILE_ARGS += -g2012 -Wall -Wtimescale
 TOPLEVEL_LANG ?= verilog
 
 # Directories

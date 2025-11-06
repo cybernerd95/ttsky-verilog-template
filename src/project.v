@@ -1,4 +1,5 @@
 `timescale 1ns/1ps
+
 module tt_um_xyz_manchester (
     input  wire clk,
     input  wire rst_n,
