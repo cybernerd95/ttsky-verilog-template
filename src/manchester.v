@@ -1,3 +1,4 @@
+`timescale 1ns/1ps
 module manchester_system(
 input clk,
 input mode,
