@@ -1,34 +1,27 @@
-`timescale 1ns/1ps
-`default_nettype none
-
 module tt_um_xyz_manchester (
-    input  wire [7:0] ui_in,    // 8-bit input data
-    output wire [7:0] uo_out,   // upper 8 bits of encoded output
-    input  wire [7:0] uio_in,   // bidirectional (mode input on bit 0)
-    output wire [7:0] uio_out,  // lower 8 bits of encoded output
-    output wire [7:0] uio_oe,   // enable for outputs
-    input  wire ena,            // enable
-    input  wire clk,            // clock
-    input  wire rst_n           // reset (active low)
+    input  wire clk,
+    input  wire rst_n,
+    input  wire [7:0] ui_in,    // data_in
+    output wire [7:0] uo_out,   // decoded_out
+    input  wire [7:0] uio_in,   // uio_in[0] = mode
+    output wire [7:0] uio_out,  // lower byte of encoded_out
+    output wire [7:0] uio_oe    // output enable (all 1's for outputs)
 );
 
-    // mode select (0 = IEEE, 1 = Thomas)
-    wire mode = uio_in[0];
-    wire [15:0] encoded;
+wire [15:0] encoded_out;
+wire [7:0] decoded_out;
+wire mode = uio_in[0];
 
-    manchester encoder (
-        .clk(clk),
-        .rst_n(rst_n),
-        .mode(mode),
-        .data_in(ui_in),
-        .encoded_out(encoded)
-    );
+manchester_system core (
+    .clk(clk),
+    .mode(mode),
+    .data_in(ui_in),
+    .encoded_out(encoded_out),
+    .decoded_out(decoded_out)
+);
 
-    // Split 16-bit output across 8-bit TT IOs
-    assign uo_out  = encoded[15:8];
-    assign uio_out = encoded[7:0];
-    assign uio_oe  = 8'hFF; // drive all uio_out bits
+assign uo_out  = decoded_out;
+assign uio_out = encoded_out[7:0];
+assign uio_oe  = 8'hFF; // enable all outputs
 
 endmodule
-
-`default_nettype wire
